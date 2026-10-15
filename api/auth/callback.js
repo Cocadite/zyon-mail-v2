@@ -7,7 +7,7 @@ export default async function handler(req,res){
   if(!configured()||!state||typeof req.query.state!=='string'||state!==req.query.state||typeof req.query.code!=='string')
     return res.status(400).send('Autorização inválida. Inicie novamente pelo botão Entrar com Discord.');
   try{
-    const redirect='https://zyon-mail-v2.vercel.app/api/auth/callback';
+    const redirect=(process.env.PUBLIC_ORIGIN||'https://zyon-mail-v2.vercel.app')+'/api/auth/callback';
     const body=new URLSearchParams({client_id:process.env.DISCORD_CLIENT_ID,client_secret:process.env.DISCORD_CLIENT_SECRET,grant_type:'authorization_code',code:req.query.code,redirect_uri:redirect});
     const response=await fetch('https://discord.com/api/oauth2/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()});
     if(!response.ok){console.error('Discord OAuth token exchange failed: HTTP',response.status);return res.status(502).send('Discord recusou a autenticação. Verifique Client Secret e Redirect URI.')}
