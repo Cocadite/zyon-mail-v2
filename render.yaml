@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: zyon-mail-v2
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: DISCORD_ALLOWED_USER_ID
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: PUBLIC_ORIGIN
+        sync: false
