@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import {getCookie,cookie} from './_auth.js';
-const API='https://api.mail.tm';
+const API='https://api.mail.gw';
 const key=()=>crypto.createHash('sha256').update('zyon-mail-v1:'+process.env.SESSION_SECRET).digest();
 export function readMailbox(req){const raw=getCookie(req,'zyon_mailbox');if(!raw||!process.env.SESSION_SECRET)return null;try{const bytes=Buffer.from(raw,'base64url');if(bytes.length<29)return null;const decipher=crypto.createDecipheriv('aes-256-gcm',key(),bytes.subarray(0,12));decipher.setAuthTag(bytes.subarray(12,28));const obj=JSON.parse(Buffer.concat([decipher.update(bytes.subarray(28)),decipher.final()]).toString());return obj&&typeof obj.address==='string'&&typeof obj.password==='string'&&typeof obj.expiresAt==='number'?obj:null}catch{return null}}
 export function saveMailbox(res,mail){const iv=crypto.randomBytes(12);const cipher=crypto.createCipheriv('aes-256-gcm',key(),iv);const data=Buffer.concat([cipher.update(JSON.stringify(mail)),cipher.final()]);const encoded=Buffer.concat([iv,cipher.getAuthTag(),data]).toString('base64url');res.setHeader('Set-Cookie',cookie('zyon_mailbox',encoded,600))}
