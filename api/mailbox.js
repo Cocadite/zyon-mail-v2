@@ -1,0 +1,17 @@
+import crypto from 'node:crypto';
+import {authorized} from './_auth.js';
+import {readMailbox,saveMailbox,clearMailbox,active,sameOrigin,request,access,fail} from './_mail.js';
+export default async function handler(req,res){res.setHeader('Cache-Control','no-store');if(!authorized(req))return res.status(401).json({error:'Não autorizado'});
+ if(req.method==='GET'){const mail=readMailbox(req);if(!active(mail)){if(mail)clearMailbox(res);return res.status(200).json({mailbox:null})}return res.status(200).json({mailbox:{address:mail.address,expiresAt:mail.expiresAt}})}
+ if(!['POST','DELETE'].includes(req.method))return res.status(405).end();
+ if(!sameOrigin(req))return res.status(403).json({error:'Origem não permitida'});
+ const old=readMailbox(req);
+ if(req.method==='DELETE'){clearMailbox(res);if(old){try{const token=await access(old);await request('/accounts/'+encodeURIComponent(old.id),{method:'DELETE',token})}catch(err){console.error('Mailbox delete failed:',err.status||err.name)}}return res.status(200).json({ok:true})}
+ if(active(old))return res.status(409).json({error:'Exclua ou aguarde expirar a caixa atual antes de criar outra.'});
+ try{const domains=await request('/domains?page=1');const domain=domains['hydra:member']?.find(x=>x.isActive&&!x.isPrivate)?.domain;if(!domain)return res.status(503).json({error:'Nenhum domínio disponível no provedor.'});
+ const address='zyon'+crypto.randomBytes(8).toString('hex')+'@'+domain;const password=crypto.randomBytes(24).toString('base64url');
+ const account=await request('/accounts',{method:'POST',body:{address,password}});
+ const mail={id:account.id,address,password,expiresAt:Date.now()+600000};
+ saveMailbox(res,mail);return res.status(201).json({mailbox:{address,expiresAt:mail.expiresAt}})
+ }catch(err){return fail(res,err)}
+}
