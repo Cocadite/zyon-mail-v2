@@ -1,5 +1,2 @@
-export default function handler(req, res) {
-  res.setHeader("Cache-Control", "no-store");
-  if (req.method !== "GET") return res.status(405).json({error:"Método não permitido"});
-  return res.status(200).json({mode:"demo",messages:[],notice:"Nenhum serviço de recebimento de e-mails foi conectado."});
-}
+import {authorized} from './_auth.js';
+export default function handler(req,res){res.setHeader('Cache-Control','no-store');if(req.method!=='GET')return res.status(405).json({error:'Método não permitido'});if(!authorized(req))return res.status(401).json({error:'Acesso não autorizado'});return res.status(200).json({mode:'demo',messages:[],notice:'Nenhum serviço de recebimento de e-mails foi conectado.'})}
